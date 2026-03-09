@@ -1,29 +1,37 @@
 'use client'
 
 import { useState } from 'react'
-import { Ticket, TicketStatus } from '@/types/ticket'
+import { Ticket, TicketPriority, TicketStatus } from '@/types/ticket'
 
 export function useTickets() {
   const [tickets, setTickets] = useState<Ticket[]>([])
 
-  function addTicket(title: string, description: string) {
+function addTicket(ticketData: {
+  title: string
+  description: string
+  status: TicketStatus
+  priority: TicketPriority
+  category?: string
+  assignee?: string
+  attachments?: File[]
+    }) {
+
     const newTicket: Ticket = {
-      id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-      title,
-      description,
-      status: 'open',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      assignee: null,
+        id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...ticketData
     }
 
-    setTickets((prev) => [newTicket, ...prev])
-  }
+    setTickets(prev => [newTicket, ...prev])
+    }
 
-  function updateStatus(id: string, status: TicketStatus) {
-    setTickets((prev) =>
-      prev.map((ticket) =>
-        ticket.id === id ? { ...ticket, status } : ticket
+  function updateStatus(ticketId: string, newStatus: TicketStatus) {
+    setTickets(prev =>
+      prev.map(ticket =>
+        ticket.id === ticketId
+          ? { ...ticket, status: newStatus, updatedAt: new Date() }
+          : ticket
       )
     )
   }

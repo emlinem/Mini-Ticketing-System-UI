@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+import Modal from '@/components/Modal'
 import { useTickets } from '@/hooks/useTickets'
 import TicketForm from '@/components/TicketForm'
 import TicketList from '@/components/TicketList'
@@ -7,6 +9,7 @@ import StatCard from '@/components/StatCard'
 
 export default function Home() {
   const { tickets, addTicket, updateStatus } = useTickets()
+  const [showModal, setShowModal] = useState(false)
 
   const open = tickets.filter((t) => t.status === 'open').length
   const inProgress = tickets.filter((t) => t.status === 'in-progress').length
@@ -22,7 +25,12 @@ export default function Home() {
         <p className="text-gray-500">Manage and track all support tickets</p>
       </div>
 
-      <button className="bg-blue-600 text-white px-5 py-2 rounded-lg">+ New Ticket</button>
+      <button
+        onClick={() => setShowModal(true)}
+        className="bg-blue-600 text-white px-5 py-2 rounded-lg"
+      >
+        + New Ticket
+      </button>
     </div>
 
     {/*Stats*/}
@@ -33,14 +41,26 @@ export default function Home() {
       <StatCard label="Closed" value={closed} color="text-green-600"/>
     </div>
 
-    {/*Create Ticket*/}
-    <TicketForm onCreate={addTicket} />
-
     {/*Ticket List*/}
     <TicketList
       tickets={tickets}
       onStatusChange={updateStatus}
     />
+
+    {showModal && (
+  <Modal onClose={() => setShowModal(false)}>
+    <h2 className="text-xl font-semibold mb-4">
+      Create Ticket
+    </h2>
+
+    <TicketForm
+      onCreate={(ticketData) => {
+            addTicket(ticketData)
+            setShowModal(false)
+          }}
+        />
+      </Modal>
+    )}
 
     </main>
   )

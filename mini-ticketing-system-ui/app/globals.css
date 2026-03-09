@@ -60,14 +60,19 @@ body {
 /* Buttons */
 
 .primary-button {
-  background-color: #2563eb;
-  color: white;
-  padding: 10px 18px;
-  border-radius: 8px;
-  font-weight: 500;
+  @apply bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors;
 }
+
 .primary-button:hover {
-  background-color: #1d4ed8; 
+  @apply bg-blue-700;
+}
+
+.primary-button:disabled {
+  @apply bg-gray-300 text-gray-500 cursor-not-allowed;
+}
+
+.primary-button:disabled:hover {
+  @apply bg-gray-300;
 }
 
 
@@ -80,25 +85,21 @@ body {
   margin-bottom: 0.25rem; 
 }
 
-.input-field {
-  width: 100%;
-  border: 1px solid; 
-  border-radius: 0.25rem; 
-  padding: 0.5rem; 
-}
-
-.textarea-field {
-  width: 100%;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  padding: 0.5rem;
-}
-
+.input-field,
+.textarea-field,
 .select-field {
-  width: 100%;
-  border: 1px solid var(--border);
-  border-radius: 0.5rem;
-  padding: 0.5rem;
+  @apply w-full rounded-lg bg-gray-100 text-gray-800 px-3 py-2 outline-none border-0 shadow-none transition-colors;
+}
+
+.input-field::placeholder,
+.textarea-field::placeholder {
+  @apply text-gray-500;
+}
+
+.input-field:focus,
+.textarea-field:focus,
+.select-field:focus {
+  @apply bg-gray-200 ring-2 ring-blue-500/30;
 }
 
 

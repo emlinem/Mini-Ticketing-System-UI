@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Ticket, TicketStatus, TicketPriority } from '@/types/ticket'
+import { Ticket, TicketStatus, TicketPriority, TicketAttachment } from '@/types/ticket'
 
 const INITIAL_TICKETS: Ticket[] = [
   {
@@ -79,6 +79,10 @@ export function useTickets() {
             ...c,
             createdAt: new Date(c.createdAt),
           })),
+          attachments: (t.attachments || []).map((a: any) => ({
+            ...a,
+            uploadedAt: new Date(a.uploadedAt),
+          })),
         }))
         setTickets(ticketsWithDates)
       } catch (error) {
@@ -107,7 +111,7 @@ export function useTickets() {
     priority: TicketPriority
     category?: string
     assignee?: string
-    attachments?: File[]
+    attachments?: TicketAttachment[]
   }) {
     const newTicket: Ticket = {
       id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
@@ -168,6 +172,34 @@ export function useTickets() {
     )
   }
 
+  function addAttachments(ticketId: string, newAttachments: TicketAttachment[]) {
+    setTickets((prev) =>
+      prev.map((ticket) =>
+        ticket.id === ticketId
+          ? {
+              ...ticket,
+              attachments: [...(ticket.attachments || []), ...newAttachments],
+              updatedAt: new Date(),
+            }
+          : ticket
+      )
+    )
+  }
+
+  function removeAttachment(ticketId: string, attachmentId: string) {
+    setTickets((prev) =>
+      prev.map((ticket) =>
+        ticket.id === ticketId
+          ? {
+              ...ticket,
+              attachments: (ticket.attachments || []).filter((a) => a.id !== attachmentId),
+              updatedAt: new Date(),
+            }
+          : ticket
+      )
+    )
+  }
+
   return {
     tickets,
     addTicket,
@@ -175,5 +207,7 @@ export function useTickets() {
     deleteTicket,
     addComment,
     deleteComment,
+    addAttachments,
+    removeAttachment,
   }
 }

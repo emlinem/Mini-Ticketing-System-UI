@@ -8,6 +8,15 @@ export interface Comment {
   createdAt: Date;
 }
 
+export interface TicketAttachment {
+  id: string
+  name: string
+  type: string
+  size: number
+  dataUrl: string
+  uploadedAt: Date
+}
+
 export interface Ticket {
   id: string;
   title: string;
@@ -18,6 +27,6 @@ export interface Ticket {
   updatedAt: Date;
   category?: string
   assignee?: string
-  attachments?: File[]
+  attachments?: TicketAttachment[]
   comments?: Comment[]
 }

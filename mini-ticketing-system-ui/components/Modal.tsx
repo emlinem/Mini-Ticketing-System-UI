@@ -1,26 +1,76 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+
 type Props = {
   children: React.ReactNode
   onClose: () => void
 }
 
 export default function Modal({ children, onClose }: Props) {
+  const [visible, setVisible] = useState(false)
+  const [isClosing, setIsClosing] = useState(false)
+
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setVisible(true))
+    return () => cancelAnimationFrame(raf)
+  }, [])
+
+  useEffect(() => {
+    const originalOverflow = document.body.style.overflow
+    const originalPaddingRight = document.body.style.paddingRight
+
+    const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth
+    document.body.style.overflow = 'hidden'
+    if (scrollbarWidth > 0) {
+      document.body.style.paddingRight = `${scrollbarWidth}px`
+    }
+
+    return () => {
+      document.body.style.overflow = originalOverflow
+      document.body.style.paddingRight = originalPaddingRight
+    }
+  }, [])
+
+  const requestClose = () => {
+    if (isClosing) return
+    setIsClosing(true)
+    setVisible(false)
+    setTimeout(() => onClose(), 220)
+  }
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') requestClose()
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isClosing])
+
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-
-      <div className="bg-white rounded-xl p-6 w-full max-w-lg relative">
-
-        {/* Close button */}
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 backdrop-blur-sm transition-opacity duration-200 ${
+        visible ? 'bg-slate-900/45 opacity-100' : 'bg-slate-900/0 opacity-0'
+      }`}
+      onClick={requestClose}
+      role="dialog"
+      aria-modal="true"
+    >
+      <div
+        className={`relative w-full max-w-xl rounded-2xl bg-white p-6 md:p-7 shadow-2xl ${
+          isClosing ? 'animate-modal-out' : 'animate-modal-spring-in'
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
         <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-gray-500"
+          onClick={requestClose}
+          aria-label="Close modal"
+          className="absolute right-3 top-3 inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           ✕
         </button>
 
-        {children}
-
+        <div className="pr-8">{children}</div>
       </div>
     </div>
   )

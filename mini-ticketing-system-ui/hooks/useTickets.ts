@@ -8,7 +8,7 @@ export function useTickets() {
 
   function addTicket(title: string, description: string) {
     const newTicket: Ticket = {
-      id: crypto.randomUUID(),
+      id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
       title,
       description,
       status: 'open',

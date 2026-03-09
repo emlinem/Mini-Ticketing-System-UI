@@ -12,40 +12,37 @@ export default function TicketList({ tickets, onStatusChange }: Props) {
     }
 
     return(
-        <div className="space-y-3">
+        <div className="space-y-6">
             {tickets.map((ticket) => (
-                <div
-                    key={ticket.id}
-                    className="bg-white border rounded-xl p-5 shadow-sm flex justify-between"
-                >
-                <div>
-                    <h3 className="font-semibold text-lg">
-                    {ticket.title}
-                    </h3>
+                <div key={ticket.id} className="ticket-card">
 
-                    <p className="text-gray-600 mt-1">
-                    {ticket.description}
-                    </p>
-                </div>
+  <div className="flex flex-col gap-2">
+    <h3 className="font-semibold text-lg">
+      {ticket.title}
+    </h3>
 
-                <div className="flex flex-col items-end gap-2">
+    <p className="text-gray-600 text-sm">
+      {ticket.description}
+    </p>
+  </div>
 
-                    <StatusBadge status={ticket.status} />
+  <div className="flex flex-col items-end gap-3">
+    <StatusBadge status={ticket.status} />
 
-                    <select
-                    value={ticket.status}
-                    onChange={(e) =>
-                        onStatusChange?.(ticket.id, e.target.value as TicketStatus)
-                    }
-                    className="border rounded p-1 text-sm"
-                    >
-                    <option value="open">Open</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="closed">Closed</option>
-                    </select>
+    <select
+      value={ticket.status}
+      onChange={(e) =>
+        onStatusChange?.(ticket.id, e.target.value as TicketStatus)
+      }
+      className="select-field"
+    >
+      <option value="open">Open</option>
+      <option value="in-progress">In Progress</option>
+      <option value="closed">Closed</option>
+    </select>
+  </div>
 
-                </div>
-                </div>
+</div>
             ))}
         </div>
     )

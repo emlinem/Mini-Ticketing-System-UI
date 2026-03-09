@@ -49,7 +49,7 @@ export default function TicketForm({ onCreate }: Props) {
 
   {/* Title */}
     <div>
-        <label className="block text-sm font-medium mb-1">
+        <label className="form-label">
         Title *
         </label>
         <input
@@ -57,21 +57,21 @@ export default function TicketForm({ onCreate }: Props) {
         placeholder="Brief description of the issue"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        className="w-full border p-2 rounded"
+        className="input-field"
         required
         />
     </div>
 
     {/* Description */}
     <div>
-        <label className="block text-sm font-medium mb-1">
+        <label className="form-label">
         Description *
         </label>
         <textarea
         placeholder="Provide detailed information about the ticket"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        className="w-full border p-2 rounded"
+        className="textarea-field"
         required
         />
     </div>
@@ -80,7 +80,7 @@ export default function TicketForm({ onCreate }: Props) {
     <div className="grid grid-cols-2 gap-4">
 
         <div>
-        <label className="block text-sm font-medium mb-1">
+        <label className="form-label">
             Priority *
         </label>
         <select
@@ -88,7 +88,7 @@ export default function TicketForm({ onCreate }: Props) {
             onChange={(e) =>
             setPriority(e.target.value as TicketPriority)
             }
-            className="w-full border p-2 rounded"
+            className="select-field"
         >
             <option value="low">Low</option>
             <option value="medium">Medium</option>
@@ -97,7 +97,7 @@ export default function TicketForm({ onCreate }: Props) {
         </div>
 
         <div>
-        <label className="block text-sm font-medium mb-1">
+        <label className="form-label">
             Status *
         </label>
         <select
@@ -105,7 +105,7 @@ export default function TicketForm({ onCreate }: Props) {
             onChange={(e) =>
             setStatus(e.target.value as TicketStatus)
             }
-            className="w-full border p-2 rounded"
+            className="select-field"
         >
             <option value="open">Open</option>
             <option value="in-progress">In Progress</option>
@@ -119,7 +119,7 @@ export default function TicketForm({ onCreate }: Props) {
     <div className="grid grid-cols-2 gap-4">
 
         <div>
-        <label className="block text-sm font-medium mb-1">
+        <label className="form-label">
             Category
         </label>
         <input
@@ -127,12 +127,12 @@ export default function TicketForm({ onCreate }: Props) {
             placeholder="Bug, Feature request, etc."
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full border p-2 rounded"
+            className="input-field"
         />
         </div>
 
         <div>
-        <label className="block text-sm font-medium mb-1">
+        <label className="form-label">
             Assignee
         </label>
         <input
@@ -140,7 +140,7 @@ export default function TicketForm({ onCreate }: Props) {
             placeholder="Assign to team member"
             value={assignee}
             onChange={(e) => setAssignee(e.target.value)}
-            className="w-full border p-2 rounded"
+            className="input-field"
         />
         </div>
 
@@ -148,7 +148,7 @@ export default function TicketForm({ onCreate }: Props) {
 
     {/* Attachments */}
     <div>
-        <label className="block text-sm font-medium mb-1">
+        <label className="form-label">
         Attachments
         </label>
         <input
@@ -164,7 +164,7 @@ export default function TicketForm({ onCreate }: Props) {
         />
         <label
         htmlFor="file-upload"
-        className="bg-gray-200 text-gray-700 px-4 py-2 rounded cursor-pointer inline-block hover:bg-gray-300"
+        className="file-upload-button"
         >
         Choose Files
         </label>
@@ -173,7 +173,7 @@ export default function TicketForm({ onCreate }: Props) {
     {/* Submit */}
     <button
         type="submit"
-        className="bg-blue-600 text-white px-4 py-2 rounded w-full"
+        className="primary-button w-full"
     >
         Create Ticket
     </button>

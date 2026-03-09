@@ -1,13 +1,21 @@
 @import "tailwindcss";
 
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* UI colors */
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --border: #e5e7eb;
+  --card-bg: #ffffff;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -16,11 +24,148 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+
+    --card-bg: #111111;
+    --border: #333333;
   }
 }
 
 body {
-  background: var(--background);
+  background: #f9fafb;
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+
+/* ------------------------------- */
+/* Reusable UI component classes */
+/* ------------------------------- */
+
+.page-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px;
+}
+
+.page-title {
+  font-size: 1.875rem; 
+  font-weight: 700; 
+}
+
+.page-subtitle {
+  color: #6b7280;
+}
+
+
+/* Buttons */
+
+.primary-button {
+  background-color: #2563eb;
+  color: white;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+.primary-button:hover {
+  background-color: #1d4ed8; 
+}
+
+
+/* Form elements */
+
+.form-label {
+  display: block;
+  font-size: 0.875rem; 
+  font-weight: 500; 
+  margin-bottom: 0.25rem; 
+}
+
+.input-field {
+  width: 100%;
+  border: 1px solid; 
+  border-radius: 0.25rem; 
+  padding: 0.5rem; 
+}
+
+.textarea-field {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+}
+
+.select-field {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+}
+
+
+/* Ticket cards */
+
+.ticket-card {
+  background-color: white;
+  border-radius: 0.75rem; 
+  padding: 1.25rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+}
+.ticket-card:hover {
+  transform: scale3d(1.01, 1.01, 1.01);
+  transition: transform 0.15s ease-in-out;
+}
+
+
+/* Stat cards */
+
+.stat-card {
+  background-color: white;
+  border: 0;
+  border-radius: 0.75rem; 
+  padding: 1.25rem; 
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+
+/* Modal */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-container {
+  background-color: white;
+  border-radius: 0.75rem; 
+  padding: 1.5rem; 
+  width: 100%;
+  max-width: 32rem; 
+  position: relative;
+}
+
+/* File upload button */
+.file-upload-button {
+  background-color: #e5e7eb;
+  color: #374151;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  display: inline-block;
+  transition: background-color 0.2s;
+}
+
+.file-upload-button:hover {
+  background-color: #d1d5db;
 }

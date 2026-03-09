@@ -4,18 +4,14 @@ type Props = {
   color?: string
 }
 
-export default function StatCard({
-  label,
-  value,
-  color = "text-black"
-}: Props) {
+export default function StatCard({ label, value, color }: Props) {
   return (
-    <div className="bg-white border rounded-xl p-5 shadow-sm">
-      <div className={`text-2xl font-bold ${color}`}>
+    <div className="stat-card">
+      <div className={`text-2xl font-semibold ${color ?? "text-black"}`}>
         {value}
       </div>
 
-      <div className="text-gray-500 text-sm">
+      <div className="text-gray-500 text-sm mt-1">
         {label}
       </div>
     </div>

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Ticket, TicketStatus, TicketPriority, TicketAttachment } from '@/types/ticket'
 
+// Initial sample tickets
 const INITIAL_TICKETS: Ticket[] = [
   {
     id: '1-initial',
@@ -68,6 +69,7 @@ export function useTickets() {
   // Load tickets from localStorage on mount
   useEffect(() => {
     const savedTickets = localStorage.getItem('tickets')
+
     if (savedTickets) {
       try {
         const parsed = JSON.parse(savedTickets)
@@ -90,20 +92,22 @@ export function useTickets() {
         setTickets(INITIAL_TICKETS)
       }
     } else {
-      // Initialize with premade tickets if no saved tickets exist
+      // Initialize with sample tickets if no saved data exists
       setTickets(INITIAL_TICKETS)
       localStorage.setItem('tickets', JSON.stringify(INITIAL_TICKETS))
     }
+
     setIsLoaded(true)
   }, [])
 
-  // Save tickets to localStorage whenever they change
+  // Persist tickets to localStorage whenever they change
   useEffect(() => {
     if (isLoaded) {
       localStorage.setItem('tickets', JSON.stringify(tickets))
     }
   }, [tickets, isLoaded])
 
+  // Create a new ticket
   function addTicket(ticketData: {
     title: string
     description: string
@@ -122,6 +126,7 @@ export function useTickets() {
     setTickets((prev) => [newTicket, ...prev])
   }
 
+  // Update ticket status
   function updateStatus(ticketId: string, newStatus: TicketStatus) {
     setTickets((prev) =>
       prev.map((ticket) =>
@@ -132,10 +137,12 @@ export function useTickets() {
     )
   }
 
+  // Delete a ticket
   function deleteTicket(ticketId: string) {
     setTickets((prev) => prev.filter((ticket) => ticket.id !== ticketId))
   }
 
+  // Add a comment to a ticket
   function addComment(ticketId: string, author: string, text: string) {
     setTickets((prev) =>
       prev.map((ticket) => {
@@ -157,6 +164,7 @@ export function useTickets() {
     )
   }
 
+  // Delete a comment from a ticket
   function deleteComment(ticketId: string, commentId: string) {
     setTickets((prev) =>
       prev.map((ticket) => {
@@ -172,6 +180,7 @@ export function useTickets() {
     )
   }
 
+  // Add attachments to a ticket
   function addAttachments(ticketId: string, newAttachments: TicketAttachment[]) {
     setTickets((prev) =>
       prev.map((ticket) =>
@@ -186,6 +195,7 @@ export function useTickets() {
     )
   }
 
+  // Remove an attachment from a ticket
   function removeAttachment(ticketId: string, attachmentId: string) {
     setTickets((prev) =>
       prev.map((ticket) =>

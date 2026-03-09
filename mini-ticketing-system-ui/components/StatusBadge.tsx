@@ -1,22 +1,15 @@
 import { TicketStatus } from '@/types/ticket'
+import { getStatusColor } from '@/utils/colorMappings'
+import { formatStatus } from '@/utils/formatters'
 
-export default function StatusBadge({
-  status
-}: {
+type Props = {
   status: TicketStatus
-}) {
+}
 
-  const styles = {
-    open: "bg-blue-100 text-blue-700",
-    "in-progress": "bg-yellow-100 text-yellow-700",
-    closed: "bg-green-100 text-green-700",
-  }
-
+export default function StatusBadge({ status }: Props) {
   return (
-    <span
-      className={`px-3 py-1 rounded-full text-xs font-medium ${styles[status]}`}
-    >
-      {status}
+    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(status)}`}>
+      {formatStatus(status)}
     </span>
   )
 }

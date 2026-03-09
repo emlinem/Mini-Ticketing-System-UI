@@ -8,14 +8,17 @@ type Props = {
 }
 
 export default function Modal({ children, onClose }: Props) {
+  // Animation state
   const [visible, setVisible] = useState(false)
   const [isClosing, setIsClosing] = useState(false)
 
+  // Trigger entrance animation on mount
   useEffect(() => {
     const raf = requestAnimationFrame(() => setVisible(true))
     return () => cancelAnimationFrame(raf)
   }, [])
 
+  // Prevent body scroll when modal is open
   useEffect(() => {
     const originalOverflow = document.body.style.overflow
     const originalPaddingRight = document.body.style.paddingRight
@@ -32,6 +35,7 @@ export default function Modal({ children, onClose }: Props) {
     }
   }, [])
 
+  // Handle modal close with animation
   const requestClose = () => {
     if (isClosing) return
     setIsClosing(true)
@@ -39,6 +43,7 @@ export default function Modal({ children, onClose }: Props) {
     setTimeout(() => onClose(), 220)
   }
 
+  // Handle Escape key to close modal
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') requestClose()
@@ -56,12 +61,14 @@ export default function Modal({ children, onClose }: Props) {
       role="dialog"
       aria-modal="true"
     >
+      {/* Modal card */}
       <div
         className={`relative w-full max-w-xl rounded-2xl bg-white p-6 md:p-7 shadow-2xl ${
           isClosing ? 'animate-modal-out' : 'animate-modal-spring-in'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Close button */}
         <button
           onClick={requestClose}
           aria-label="Close modal"
@@ -70,6 +77,7 @@ export default function Modal({ children, onClose }: Props) {
           ✕
         </button>
 
+        {/* Content */}
         <div className="pr-8">{children}</div>
       </div>
     </div>

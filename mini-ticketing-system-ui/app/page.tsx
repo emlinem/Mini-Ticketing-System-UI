@@ -7,37 +7,56 @@ import { useTickets } from '@/hooks/useTickets'
 import TicketForm from '@/components/TicketForm'
 import StatCard from '@/components/StatCard'
 import { TicketStatus, TicketPriority } from '@/types/ticket'
+import { getStatusColor, getPriorityColor } from '@/utils/colorMappings'
+import { formatStatus, formatPriority } from '@/utils/formatters'
+
 type SortBy = 'title' | 'status' | 'priority' | 'category' | 'assignee' | 'createdAt' | 'updatedAt'
 type SortOrder = 'asc' | 'desc'
 
 export default function Home() {
   const router = useRouter()
-  const { tickets, addTicket, updateStatus } = useTickets()
+  const { tickets, addTicket } = useTickets()
+
+  // UI state
   const [showModal, setShowModal] = useState(false)
+
+  // Filter state
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState<TicketStatus | ''>('')
   const [priorityFilter, setPriorityFilter] = useState<TicketPriority | ''>('')
+
+  // Sort state
   const [sortBy, setSortBy] = useState<SortBy>('createdAt')
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc')
 
-  const open = tickets.filter((t) => t.status === 'open').length
-  const inProgress = tickets.filter((t) => t.status === 'in-progress').length
-  const closed = tickets.filter((t) => t.status === 'closed').length
+  // Stat calculations
+  const statsCount = useMemo(() => ({
+    total: tickets.length,
+    open: tickets.filter((t) => t.status === 'open').length,
+    inProgress: tickets.filter((t) => t.status === 'in-progress').length,
+    closed: tickets.filter((t) => t.status === 'closed').length,
+  }), [tickets])
 
+  // Filter tickets based on search and filters
   const filteredTickets = useMemo(() => {
     return tickets.filter(ticket => {
-      const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            ticket.description.toLowerCase().includes(searchTerm.toLowerCase())
+      const matchesSearch = 
+        ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.description.toLowerCase().includes(searchTerm.toLowerCase())
       const matchesStatus = !statusFilter || ticket.status === statusFilter
       const matchesPriority = !priorityFilter || ticket.priority === priorityFilter
+      
       return matchesSearch && matchesStatus && matchesPriority
     })
   }, [tickets, searchTerm, statusFilter, priorityFilter])
 
+  // Sort tickets
   const sortedTickets = useMemo(() => {
     return [...filteredTickets].sort((a, b) => {
       let aValue: any = a[sortBy]
       let bValue: any = b[sortBy]
+
+      // Handle different data types
       if (sortBy === 'createdAt' || sortBy === 'updatedAt') {
         aValue = new Date(aValue).getTime()
         bValue = new Date(bValue).getTime()
@@ -50,12 +69,14 @@ export default function Home() {
         aValue = statusOrder[a.status]
         bValue = statusOrder[b.status]
       }
+
       if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1
       if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1
       return 0
     })
   }, [filteredTickets, sortBy, sortOrder])
 
+  // Toggle sort column and order
   const handleSort = (column: SortBy) => {
     if (sortBy === column) {
       setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
@@ -65,35 +86,11 @@ export default function Home() {
     }
   }
 
-  const getStatusColor = (status: TicketStatus) => {
-    const colors = {
-      'open': 'bg-blue-100 text-blue-700',
-      'in-progress': 'bg-yellow-100 text-yellow-700',
-      'closed': 'bg-green-100 text-green-700',
-    }
-    return colors[status] || ''
-  }
-
-  const formatStatus = (status: TicketStatus) => {
-    const statusMap = {
-      'open': 'Open',
-      'in-progress': 'In Progress',
-      'closed': 'Closed',
-    }
-    return statusMap[status] || status
-  }
-
-  const getPriorityColor = (priority: TicketPriority) => {
-    const colors = {
-      'low': 'bg-gray-100 text-gray-700',
-      'medium': 'bg-orange-100 text-orange-700',
-      'high': 'bg-red-100 text-red-700',
-    }
-    return colors[priority] || ''
-  }
-
-  const formatPriority = (priority: TicketPriority) => {
-    return priority.charAt(0).toUpperCase() + priority.slice(1)
+  // Clear all active filters
+  const clearFilters = () => {
+    setSearchTerm('')
+    setStatusFilter('')
+    setPriorityFilter('')
   }
 
   return (
@@ -119,15 +116,16 @@ export default function Home() {
 
         {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <StatCard label="Total Tickets" value={tickets.length}/>
-          <StatCard label="Open" value={open} color="text-blue-600"/>
-          <StatCard label="In Progress" value={inProgress} color="text-yellow-500"/>
-          <StatCard label="Closed" value={closed} color="text-green-600"/>
+          <StatCard label="Total Tickets" value={statsCount.total} />
+          <StatCard label="Open" value={statsCount.open} color="text-blue-600" />
+          <StatCard label="In Progress" value={statsCount.inProgress} color="text-yellow-500" />
+          <StatCard label="Closed" value={statsCount.closed} color="text-green-600" />
         </div>
 
         {/* Filters */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
           <div className="flex flex-wrap gap-3 items-center">
+            {/* Search input */}
             <div className="flex-1 min-w-[250px]">
               <div className="relative">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -142,6 +140,8 @@ export default function Home() {
                 />
               </div>
             </div>
+
+            {/* Status filter */}
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value as TicketStatus | '')}
@@ -152,6 +152,8 @@ export default function Home() {
               <option value="in-progress">In Progress</option>
               <option value="closed">Closed</option>
             </select>
+
+            {/* Priority filter */}
             <select
               value={priorityFilter}
               onChange={(e) => setPriorityFilter(e.target.value as TicketPriority | '')}
@@ -162,13 +164,11 @@ export default function Home() {
               <option value="medium">Medium</option>
               <option value="high">High</option>
             </select>
+
+            {/* Clear filters button */}
             {(searchTerm || statusFilter || priorityFilter) && (
               <button
-                onClick={() => {
-                  setSearchTerm('')
-                  setStatusFilter('')
-                  setPriorityFilter('')
-                }}
+                onClick={clearFilters}
                 className="h-10 px-4 text-gray-600 hover:text-gray-900 font-medium transition-colors"
               >
                 Clear filters
@@ -183,43 +183,29 @@ export default function Home() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-80 hover:bg-gray-100 transition-colors">
-                    <button onClick={() => handleSort('title')} className="flex items-center w-full text-left">
-                      Title <span className="text-xs ml-1 font-bold" style={{ opacity: sortBy === 'title' ? 1 : 0 }}>{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                    </button>
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-32 hover:bg-gray-100 transition-colors">
-                    <button onClick={() => handleSort('status')} className="flex items-center w-full text-left">
-                      Status <span className="text-xs ml-1 font-bold" style={{ opacity: sortBy === 'status' ? 1 : 0 }}>{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                    </button>
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-24 hover:bg-gray-100 transition-colors">
-                    <button onClick={() => handleSort('priority')} className="flex items-center w-full text-left">
-                      Priority <span className="text-xs ml-1 font-bold" style={{ opacity: sortBy === 'priority' ? 1 : 0 }}>{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                    </button>
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-32 hover:bg-gray-100 transition-colors">
-                    <button onClick={() => handleSort('category')} className="flex items-center w-full text-left">
-                      Category <span className="text-xs ml-1 font-bold" style={{ opacity: sortBy === 'category' ? 1 : 0 }}>{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                    </button>
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-40 hover:bg-gray-100 transition-colors">
-                    <button onClick={() => handleSort('assignee')} className="flex items-center w-full text-left">
-                      Assigned to <span className="text-xs ml-1 font-bold" style={{ opacity: sortBy === 'assignee' ? 1 : 0 }}>{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                    </button>
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-32 hover:bg-gray-100 transition-colors">
-                    <button onClick={() => handleSort('createdAt')} className="flex items-center w-full text-left">
-                      Created <span className="text-xs ml-1 font-bold" style={{ opacity: sortBy === 'createdAt' ? 1 : 0 }}>{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                    </button>
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider w-32 hover:bg-gray-100 transition-colors">
-                    <button onClick={() => handleSort('updatedAt')} className="flex items-center w-full text-left">
-                      Last Updated <span className="text-xs ml-1 font-bold" style={{ opacity: sortBy === 'updatedAt' ? 1 : 0 }}>{sortOrder === 'asc' ? '↑' : '↓'}</span>
-                    </button>
-                  </th>
+                  {/* Column headers with sort buttons */}
+                  {['title', 'status', 'priority', 'category', 'assignee', 'createdAt', 'updatedAt'].map((col) => (
+                    <th
+                      key={col}
+                      className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider hover:bg-gray-100 transition-colors"
+                    >
+                      <button
+                        onClick={() => handleSort(col as SortBy)}
+                        className="flex items-center w-full text-left"
+                      >
+                        {col === 'createdAt' ? 'Created' : col === 'updatedAt' ? 'Last Updated' : col === 'assignee' ? 'Assigned to' : col.charAt(0).toUpperCase() + col.slice(1)}
+                        <span
+                          className="text-xs ml-1 font-bold"
+                          style={{ opacity: sortBy === col ? 1 : 0 }}
+                        >
+                          {sortOrder === 'asc' ? '↑' : '↓'}
+                        </span>
+                      </button>
+                    </th>
+                  ))}
                 </tr>
               </thead>
+
               <tbody className="bg-white divide-y divide-gray-200">
                 {sortedTickets.length > 0 ? (
                   sortedTickets.map((ticket) => (
@@ -273,12 +259,10 @@ export default function Home() {
           </div>
         </div>
 
+        {/* Create Ticket Modal */}
         {showModal && (
           <Modal onClose={() => setShowModal(false)}>
-            <h2 className="text-xl font-semibold mb-4">
-              Create Ticket
-            </h2>
-
+            <h2 className="text-xl font-semibold mb-4">Create Ticket</h2>
             <TicketForm
               onCreate={(ticketData) => {
                 addTicket(ticketData)

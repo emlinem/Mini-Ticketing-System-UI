@@ -3,7 +3,10 @@
 import { useRouter } from 'next/navigation'
 import { useTickets } from '@/hooks/useTickets'
 import { TicketAttachment, TicketStatus } from '@/types/ticket'
-import { use, useRef, useState } from 'react'
+import { use, useRef, useState, useMemo } from 'react'
+import { getStatusColor, getStatusSelectColor, getPriorityColor, getPrioritySelectColor } from '@/utils/colorMappings'
+import { formatStatus, formatPriority } from '@/utils/formatters'
+import { fileToDataUrl } from '@/utils/fileHandling'
 
 export default function TicketDetail({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
@@ -11,88 +14,48 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { id } = use(params)
   const ticket = tickets.find((t) => t.id === id)
+
+  // UI state
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+
+  // Comment state
   const [commentAuthor, setCommentAuthor] = useState('')
   const [commentText, setCommentText] = useState('')
 
-  if (!ticket) {
-    return (
-      <div className="min-h-screen p-10">
-        <p>Ticket not found</p>
-        <p>Looking for ID: {id}</p>
-        <p>Available tickets: {tickets.map(t => t.id).join(', ')}</p>
-      </div>
-    )
-  }
+  // Validation
+  const isCommentValid = useMemo(() => 
+    commentAuthor.trim() !== '' && commentText.trim() !== '',
+    [commentAuthor, commentText]
+  )
 
-  const getStatusColor = (status: TicketStatus) => {
-    const colors = {
-      'open': 'bg-blue-100 text-blue-700',
-      'in-progress': 'bg-yellow-100 text-yellow-700',
-      'closed': 'bg-green-100 text-green-700',
-    }
-    return colors[status] || ''
-  }
-
-  const formatStatus = (status: TicketStatus) => {
-    const statusMap = {
-      'open': 'Open',
-      'in-progress': 'In Progress',
-      'closed': 'Closed',
-    }
-    return statusMap[status] || status
-  }
-
-  const getPriorityColor = (priority: string) => {
-    const colors: { [key: string]: string } = {
-      'low': 'bg-gray-200 text-gray-800',
-      'medium': 'bg-orange-100 text-orange-800',
-      'high': 'bg-red-100 text-red-800',
-    }
-    return colors[priority] || ''
-  }
-
-  const formatPriority = (priority: string) => {
-    return priority.charAt(0).toUpperCase() + priority.slice(1)
-  }
-
+  // Event handlers
   const handleSave = () => {
     // TODO: Implement save functionality
     setIsEditing(false)
   }
 
   const handleDelete = () => {
-    deleteTicket(ticket.id)
+    deleteTicket(ticket!.id)
     router.push('/')
   }
 
   const handleMarkAsResolved = () => {
-    updateStatus(ticket.id, 'closed')
+    updateStatus(ticket!.id, 'closed')
   }
 
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault()
-    if (commentAuthor.trim() && commentText.trim()) {
-      addComment(ticket.id, commentAuthor, commentText)
-      setCommentAuthor('')
-      setCommentText('')
-    }
+    if (!isCommentValid) return
+
+    addComment(ticket!.id, commentAuthor, commentText)
+    setCommentAuthor('')
+    setCommentText('')
   }
 
   const handleDeleteComment = (commentId: string) => {
-    deleteComment(ticket.id, commentId)
+    deleteComment(ticket!.id, commentId)
   }
-
-  const isCommentValid = commentAuthor.trim() !== '' && commentText.trim() !== ''
-
-  const fileToDataUrl = (file: File) =>
-    new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve(reader.result as string)
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
 
   const handleAddAttachments = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files ? Array.from(e.target.files) : []
@@ -109,8 +72,19 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
       }))
     )
 
-    addAttachments(ticket.id, mapped)
+    addAttachments(ticket!.id, mapped)
     e.target.value = ''
+  }
+
+  // Error state
+  if (!ticket) {
+    return (
+      <div className="min-h-screen p-10">
+        <p>Ticket not found</p>
+        <p>Looking for ID: {id}</p>
+        <p>Available tickets: {tickets.map(t => t.id).join(', ')}</p>
+      </div>
+    )
   }
 
   return (
@@ -171,7 +145,7 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
           </div>
         </div>
 
-        {/* Content */}
+        {/* Content Grid */}
         <div className="grid grid-cols-3 gap-6">
           {/* Main Content */}
           <div className="col-span-2 space-y-6">
@@ -193,7 +167,6 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4">Comments</h2>
               
-              {/* Existing Comments */}
               <div className="space-y-4 mb-6">
                 {ticket.comments && ticket.comments.length > 0 ? (
                   ticket.comments.map((comment) => (
@@ -208,6 +181,7 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
                         <button
                           onClick={() => handleDeleteComment(comment.id)}
                           className="text-red-500 hover:text-red-700"
+                          aria-label={`Delete comment by ${comment.author}`}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                             <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -222,7 +196,6 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
                 )}
               </div>
 
-              {/* Add Comment Form */}
               <form onSubmit={handleAddComment} className="space-y-3">
                 <input
                   type="text"
@@ -272,7 +245,6 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
                         onClick={() => removeAttachment(ticket.id, file.id)}
                         className="text-red-600 hover:text-red-700"
                         aria-label={`Delete attachment ${file.name}`}
-                        title="Delete attachment"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -312,6 +284,7 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4">Details</h2>
               <div className="space-y-4">
+                {/* Status */}
                 <div>
                   <label className="text-sm font-medium text-gray-600">Status</label>
                   <div className="mt-1">
@@ -332,6 +305,8 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
                     )}
                   </div>
                 </div>
+
+                {/* Priority */}
                 <div>
                   <label className="text-sm font-medium text-gray-600">Priority</label>
                   <div className="mt-1">
@@ -351,6 +326,8 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
                     )}
                   </div>
                 </div>
+
+                {/* Category */}
                 <div>
                   <label className="text-sm font-medium text-gray-600">Category</label>
                   <div className="mt-1">
@@ -365,6 +342,8 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
                     )}
                   </div>
                 </div>
+
+                {/* Assignee */}
                 <div>
                   <label className="text-sm font-medium text-gray-600">Assignee</label>
                   <div className="mt-1">
@@ -379,10 +358,14 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
                     )}
                   </div>
                 </div>
+
+                {/* Created Date */}
                 <div>
                   <label className="text-sm font-medium text-gray-600">Created</label>
                   <p className="mt-1 text-gray-900">{new Date(ticket.createdAt).toLocaleDateString()}</p>
                 </div>
+
+                {/* Updated Date */}
                 <div>
                   <label className="text-sm font-medium text-gray-600">Last updated</label>
                   <p className="mt-1 text-gray-900">{new Date(ticket.updatedAt).toLocaleDateString()}</p>
@@ -441,22 +424,4 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
       </main>
     </div>
   )
-}
-
-const getStatusSelectColor = (status: TicketStatus) => {
-  const colors = {
-    'open': 'bg-blue-100 text-blue-800',
-    'in-progress': 'bg-yellow-100 text-yellow-800',
-    'closed': 'bg-green-100 text-green-800',
-  }
-  return colors[status]
-}
-
-const getPrioritySelectColor = (priority: string) => {
-  const colors: Record<string, string> = {
-    low: 'bg-gray-200 text-gray-800',
-    medium: 'bg-orange-100 text-orange-800',
-    high: 'bg-red-100 text-red-800',
-  }
-  return colors[priority] || 'bg-gray-100 text-gray-800'
 }

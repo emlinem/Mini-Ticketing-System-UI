@@ -1,11 +1,14 @@
-"use client"
+'use client'
+
+import { useTickets } from '@/hooks/useTickets'
 
 export default function Home() {
+  const { tickets } = useTickets()
+
   return (
-    <main className="max-w-4xl mx-auto p-10">
-      <h1 className="text-3xl font-bold">
-        Support Ticket Manager
-      </h1>
+    <main>
+      <h1>Support Ticket Manager</h1>
+      <p>{tickets.length} tickets</p>
     </main>
   )
 }

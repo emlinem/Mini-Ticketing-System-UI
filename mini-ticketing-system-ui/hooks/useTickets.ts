@@ -75,6 +75,10 @@ export function useTickets() {
           ...t,
           createdAt: new Date(t.createdAt),
           updatedAt: new Date(t.updatedAt),
+          comments: (t.comments || []).map((c: any) => ({
+            ...c,
+            createdAt: new Date(c.createdAt),
+          })),
         }))
         setTickets(ticketsWithDates)
       } catch (error) {
@@ -124,9 +128,52 @@ export function useTickets() {
     )
   }
 
+  function deleteTicket(ticketId: string) {
+    setTickets((prev) => prev.filter((ticket) => ticket.id !== ticketId))
+  }
+
+  function addComment(ticketId: string, author: string, text: string) {
+    setTickets((prev) =>
+      prev.map((ticket) => {
+        if (ticket.id === ticketId) {
+          const newComment = {
+            id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+            author,
+            text,
+            createdAt: new Date(),
+          }
+          return {
+            ...ticket,
+            comments: [...(ticket.comments || []), newComment],
+            updatedAt: new Date(),
+          }
+        }
+        return ticket
+      })
+    )
+  }
+
+  function deleteComment(ticketId: string, commentId: string) {
+    setTickets((prev) =>
+      prev.map((ticket) => {
+        if (ticket.id === ticketId) {
+          return {
+            ...ticket,
+            comments: (ticket.comments || []).filter((c) => c.id !== commentId),
+            updatedAt: new Date(),
+          }
+        }
+        return ticket
+      })
+    )
+  }
+
   return {
     tickets,
     addTicket,
     updateStatus,
+    deleteTicket,
+    addComment,
+    deleteComment,
   }
 }

@@ -3,16 +3,24 @@
 import { useRouter } from 'next/navigation'
 import { useTickets } from '@/hooks/useTickets'
 import { TicketStatus } from '@/types/ticket'
+import { use, useState } from 'react'
 
-export default function TicketDetail({ params }: { params: { id: string } }) {
+export default function TicketDetail({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
-  const { tickets, updateStatus } = useTickets()
-  const ticket = tickets.find((t) => t.id === params.id)
+  const { tickets, updateStatus, deleteTicket, addComment, deleteComment } = useTickets()
+  const { id } = use(params)
+  const ticket = tickets.find((t) => t.id === id)
+  const [isEditing, setIsEditing] = useState(false)
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [commentAuthor, setCommentAuthor] = useState('')
+  const [commentText, setCommentText] = useState('')
 
   if (!ticket) {
     return (
       <div className="min-h-screen p-10">
         <p>Ticket not found</p>
+        <p>Looking for ID: {id}</p>
+        <p>Available tickets: {tickets.map(t => t.id).join(', ')}</p>
       </div>
     )
   }
@@ -26,42 +34,112 @@ export default function TicketDetail({ params }: { params: { id: string } }) {
     return colors[status] || ''
   }
 
+  const formatStatus = (status: TicketStatus) => {
+    const statusMap = {
+      'open': 'Open',
+      'in-progress': 'In Progress',
+      'closed': 'Closed',
+    }
+    return statusMap[status] || status
+  }
+
   const getPriorityColor = (priority: string) => {
     const colors: { [key: string]: string } = {
-      'low': 'bg-gray-100 text-gray-700',
+      'low': 'bg-gray-200 text-gray-800',
       'medium': 'bg-orange-100 text-orange-700',
       'high': 'bg-red-100 text-red-700',
     }
     return colors[priority] || ''
   }
 
+  const formatPriority = (priority: string) => {
+    return priority.charAt(0).toUpperCase() + priority.slice(1)
+  }
+
+  const handleSave = () => {
+    // TODO: Implement save functionality
+    setIsEditing(false)
+  }
+
+  const handleDelete = () => {
+    deleteTicket(ticket.id)
+    router.push('/')
+  }
+
+  const handleMarkAsResolved = () => {
+    updateStatus(ticket.id, 'closed')
+  }
+
+  const handleAddComment = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (commentAuthor.trim() && commentText.trim()) {
+      addComment(ticket.id, commentAuthor, commentText)
+      setCommentAuthor('')
+      setCommentText('')
+    }
+  }
+
+  const handleDeleteComment = (commentId: string) => {
+    deleteComment(ticket.id, commentId)
+  }
+
+  const isCommentValid = commentAuthor.trim() !== '' && commentText.trim() !== ''
+
   return (
     <div className="min-h-screen bg-gray-100">
       <main className="page-container space-y-6">
         {/* Back Button */}
         <button
-          onClick={() => router.back()}
+          onClick={() => router.push('/')}
           className="text-gray-600 hover:text-gray-900 flex items-center gap-2"
         >
           ← Back to Tickets
         </button>
 
+        {/* Completion Banner */}
+        {ticket.status === 'closed' && (
+          <div className="bg-green-100 border border-green-300 text-green-800 px-6 py-4 rounded-lg">
+            <p className="font-semibold">✓ This ticket has been marked as resolved.</p>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex justify-between items-start">
-          <div>
-            <h1 className="text-3xl font-bold mb-4">{ticket.title}</h1>
+          <div className="flex-1 max-w-2xl">
+            {isEditing ? (
+              <input
+                type="text"
+                defaultValue={ticket.title}
+                className="text-3xl font-bold mb-4 w-full border-b-2 border-gray-300 focus:border-blue-500 outline-none bg-transparent py-1"
+              />
+            ) : (
+              <h1 className="text-3xl font-bold mb-4 py-1">{ticket.title}</h1>
+            )}
             <div className="flex gap-2">
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(ticket.status)}`}>
-                {ticket.status}
+                {formatStatus(ticket.status)}
               </span>
               <span className={`px-3 py-1 rounded-full text-sm font-medium ${getPriorityColor(ticket.priority)}`}>
-                {ticket.priority}
+                {formatPriority(ticket.priority)}
               </span>
             </div>
           </div>
-          <div className="flex gap-2">
-            <button className="text-blue-600 hover:text-blue-800">✏️ Edit</button>
-            <button className="text-red-600 hover:text-red-800">🗑️ Delete</button>
+          <div className="flex gap-2 flex-shrink-0">
+            {isEditing ? (
+              <button 
+                onClick={handleSave}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 whitespace-nowrap"
+              >
+                Save Changes
+              </button>
+            ) : (
+              <button 
+                onClick={() => setIsEditing(true)}
+                className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 whitespace-nowrap"
+              >
+                Edit
+              </button>
+            )}
           </div>
         </div>
 
@@ -72,29 +150,76 @@ export default function TicketDetail({ params }: { params: { id: string } }) {
             {/* Description */}
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4">Description</h2>
-              <p className="text-gray-600">{ticket.description}</p>
+              {isEditing ? (
+                <textarea
+                  defaultValue={ticket.description}
+                  className="textarea-field w-full"
+                  rows={6}
+                />
+              ) : (
+                <p className="text-gray-600">{ticket.description}</p>
+              )}
             </div>
 
             {/* Comments */}
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4">Comments</h2>
-              <p className="text-gray-600 mb-4">No comments yet</p>
-              <form className="space-y-3">
+              
+              {/* Existing Comments */}
+              <div className="space-y-4 mb-6">
+                {ticket.comments && ticket.comments.length > 0 ? (
+                  ticket.comments.map((comment) => (
+                    <div key={comment.id} className="border-l-4 border-blue-500 pl-4 py-2 bg-gray-50 rounded">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="font-semibold text-gray-900">{comment.author}</p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(comment.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteComment(comment.id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                      </div>
+                      <p className="text-gray-700">{comment.text}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-600">No comments yet</p>
+                )}
+              </div>
+
+              {/* Add Comment Form */}
+              <form onSubmit={handleAddComment} className="space-y-3">
                 <input
                   type="text"
                   placeholder="Your Name"
+                  value={commentAuthor}
+                  onChange={(e) => setCommentAuthor(e.target.value)}
                   className="input-field w-full"
                 />
                 <textarea
                   placeholder="Add a comment..."
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
                   className="textarea-field w-full"
                   rows={4}
                 />
                 <button
                   type="submit"
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                  disabled={!isCommentValid}
+                  className={`px-4 py-2 rounded-lg font-medium ${
+                    isCommentValid
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
                 >
-                  → Add a comment
+                  Add a comment
                 </button>
               </form>
             </div>
@@ -102,9 +227,13 @@ export default function TicketDetail({ params }: { params: { id: string } }) {
             {/* Attachments */}
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4">Attachments</h2>
-              <button className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">
-                ⬇️ Upload file
-              </button>
+              {isEditing ? (
+                <button className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">
+                  Upload file
+                </button>
+              ) : (
+                <p className="text-gray-600">No attachments</p>
+              )}
             </div>
           </div>
 
@@ -116,23 +245,67 @@ export default function TicketDetail({ params }: { params: { id: string } }) {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-gray-600">Status</label>
-                  <select
-                    value={ticket.status}
-                    onChange={(e) => updateStatus(ticket.id, e.target.value as TicketStatus)}
-                    className="select-field w-full mt-1"
-                  >
-                    <option value="open">Open</option>
-                    <option value="in-progress">In Progress</option>
-                    <option value="closed">Closed</option>
-                  </select>
+                  <div className="mt-1">
+                    {isEditing ? (
+                      <select
+                        value={ticket.status}
+                        onChange={(e) => updateStatus(ticket.id, e.target.value as TicketStatus)}
+                        className="select-field w-full"
+                      >
+                        <option value="open">Open</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="closed">Closed</option>
+                      </select>
+                    ) : (
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(ticket.status)}`}>
+                        {formatStatus(ticket.status)}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-600">Priority</label>
-                  <p className="mt-1 text-gray-900 capitalize">{ticket.priority}</p>
+                  <div className="mt-1">
+                    {isEditing ? (
+                      <select className="select-field w-full" defaultValue={ticket.priority}>
+                        <option value="low">Low</option>
+                        <option value="medium">Medium</option>
+                        <option value="high">High</option>
+                      </select>
+                    ) : (
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getPriorityColor(ticket.priority)}`}>
+                        {formatPriority(ticket.priority)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-gray-600">Category</label>
+                  <div className="mt-1">
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        defaultValue={ticket.category || ''}
+                        className="input-field w-full"
+                      />
+                    ) : (
+                      <p className="text-gray-900">{ticket.category || 'N/A'}</p>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-600">Assignee</label>
-                  <p className="mt-1 text-gray-900">{ticket.assignee || 'Unassigned'}</p>
+                  <div className="mt-1">
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        defaultValue={ticket.assignee || ''}
+                        className="input-field w-full"
+                      />
+                    ) : (
+                      <p className="text-gray-900">{ticket.assignee || 'Unassigned'}</p>
+                    )}
+                  </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-600">Created</label>
@@ -149,16 +322,50 @@ export default function TicketDetail({ params }: { params: { id: string } }) {
             <div className="bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
               <div className="space-y-2">
-                <button className="w-full bg-green-200 text-green-700 px-4 py-2 rounded-lg hover:bg-green-300 font-medium">
-                  Mark as Resolved
-                </button>
-                <button className="w-full bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 font-medium">
-                  Close ticket
+                {ticket.status !== 'closed' && (
+                  <button 
+                    onClick={handleMarkAsResolved}
+                    className="w-full bg-green-200 text-green-700 px-4 py-2 rounded-lg hover:bg-green-300 font-medium"
+                  >
+                    Mark as Resolved
+                  </button>
+                )}
+                <button 
+                  onClick={() => setShowDeleteModal(true)}
+                  className="w-full bg-red-200 text-red-700 px-4 py-2 rounded-lg hover:bg-red-300 font-medium"
+                >
+                  Delete Ticket
                 </button>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="modal-overlay">
+            <div className="modal-container">
+              <h2 className="text-xl font-semibold mb-4">Delete Ticket</h2>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to delete this ticket? This action cannot be undone.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDelete}
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   )

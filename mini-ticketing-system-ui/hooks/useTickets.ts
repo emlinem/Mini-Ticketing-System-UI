@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Ticket, TicketStatus, TicketPriority, TicketAttachment } from '@/types/ticket'
 
 // Initial sample tickets
@@ -62,50 +62,67 @@ const INITIAL_TICKETS: Ticket[] = [
   },
 ]
 
+type StoredComment = {
+  id: string
+  author: string
+  text: string
+  createdAt: string
+}
+
+type StoredAttachment = Omit<TicketAttachment, 'uploadedAt'> & {
+  uploadedAt: string
+}
+
+type StoredTicket = Omit<Ticket, 'createdAt' | 'updatedAt' | 'comments' | 'attachments'> & {
+  createdAt: string
+  updatedAt: string
+  comments?: StoredComment[]
+  attachments?: StoredAttachment[]
+}
+
+function hydrateTickets(raw: StoredTicket[]): Ticket[] {
+  return raw.map((t) => ({
+    ...t,
+    createdAt: new Date(t.createdAt),
+    updatedAt: new Date(t.updatedAt),
+    comments: (t.comments || []).map((c) => ({
+      ...c,
+      createdAt: new Date(c.createdAt),
+    })),
+    attachments: (t.attachments || []).map((a) => ({
+      ...a,
+      uploadedAt: new Date(a.uploadedAt),
+    })),
+  }))
+}
+
+function getInitialTickets(): Ticket[] {
+  if (typeof window === 'undefined') return INITIAL_TICKETS
+
+  const saved = localStorage.getItem('tickets')
+  if (!saved) return INITIAL_TICKETS
+
+  try {
+    const parsed = JSON.parse(saved) as StoredTicket[]
+    return hydrateTickets(parsed)
+  } catch (error) {
+    console.error('Failed to parse tickets:', error)
+    return INITIAL_TICKETS
+  }
+}
+
 export function useTickets() {
-  const [tickets, setTickets] = useState<Ticket[]>([])
-  const [isLoaded, setIsLoaded] = useState(false)
+  const [tickets, setTickets] = useState<Ticket[]>(getInitialTickets)
+  const hasMounted = useRef(false)
 
-  // Load tickets from localStorage on mount
+  // Persist tickets to localStorage whenever they change (skip first render)
   useEffect(() => {
-    const savedTickets = localStorage.getItem('tickets')
-
-    if (savedTickets) {
-      try {
-        const parsed = JSON.parse(savedTickets)
-        const ticketsWithDates = parsed.map((t: any) => ({
-          ...t,
-          createdAt: new Date(t.createdAt),
-          updatedAt: new Date(t.updatedAt),
-          comments: (t.comments || []).map((c: any) => ({
-            ...c,
-            createdAt: new Date(c.createdAt),
-          })),
-          attachments: (t.attachments || []).map((a: any) => ({
-            ...a,
-            uploadedAt: new Date(a.uploadedAt),
-          })),
-        }))
-        setTickets(ticketsWithDates)
-      } catch (error) {
-        console.error('Failed to parse tickets:', error)
-        setTickets(INITIAL_TICKETS)
-      }
-    } else {
-      // Initialize with sample tickets if no saved data exists
-      setTickets(INITIAL_TICKETS)
-      localStorage.setItem('tickets', JSON.stringify(INITIAL_TICKETS))
+    if (!hasMounted.current) {
+      hasMounted.current = true
+      return
     }
-
-    setIsLoaded(true)
-  }, [])
-
-  // Persist tickets to localStorage whenever they change
-  useEffect(() => {
-    if (isLoaded) {
-      localStorage.setItem('tickets', JSON.stringify(tickets))
-    }
-  }, [tickets, isLoaded])
+    localStorage.setItem('tickets', JSON.stringify(tickets))
+  }, [tickets])
 
   // Create a new ticket
   function addTicket(ticketData: {

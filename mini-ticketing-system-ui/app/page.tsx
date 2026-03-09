@@ -1,21 +1,31 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Modal from '@/components/Modal'
 import { useTickets } from '@/hooks/useTickets'
+import { useHydrated } from '@/hooks/useHydrated'
+import Modal from '@/components/Modal'
 import TicketForm from '@/components/TicketForm'
-import StatCard from '@/components/StatCard'
-import { TicketStatus, TicketPriority } from '@/types/ticket'
 import { getStatusColor, getPriorityColor } from '@/utils/colorMappings'
-import { formatStatus, formatPriority } from '@/utils/formatters'
+import { formatPriority, formatStatus } from '@/utils/formatters'
+import type { TicketPriority, TicketStatus } from '@/types/ticket'
 
 type SortBy = 'title' | 'status' | 'priority' | 'category' | 'assignee' | 'createdAt' | 'updatedAt'
 type SortOrder = 'asc' | 'desc'
 
+function StatCard({ label, value, color }: { label: string; value: number; color?: string }) {
+  return (
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 flex flex-col items-center">
+      <div className={`text-2xl font-bold ${color ?? 'text-gray-900'}`}>{value}</div>
+      <div className="text-sm text-gray-600 mt-1">{label}</div>
+    </div>
+  )
+}
+
 export default function Home() {
   const router = useRouter()
   const { tickets, addTicket } = useTickets()
+  const hydrated = useHydrated()
 
   // UI state
   const [showModal, setShowModal] = useState(false)
@@ -53,21 +63,23 @@ export default function Home() {
   // Sort tickets
   const sortedTickets = useMemo(() => {
     return [...filteredTickets].sort((a, b) => {
-      let aValue: any = a[sortBy]
-      let bValue: any = b[sortBy]
+      let aValue: string | number
+      let bValue: string | number
 
-      // Handle different data types
       if (sortBy === 'createdAt' || sortBy === 'updatedAt') {
-        aValue = new Date(aValue).getTime()
-        bValue = new Date(bValue).getTime()
+        aValue = new Date(a[sortBy]).getTime()
+        bValue = new Date(b[sortBy]).getTime()
       } else if (sortBy === 'priority') {
-        const priorityOrder = { low: 1, medium: 2, high: 3 }
+        const priorityOrder: Record<TicketPriority, number> = { low: 1, medium: 2, high: 3 }
         aValue = priorityOrder[a.priority]
         bValue = priorityOrder[b.priority]
       } else if (sortBy === 'status') {
-        const statusOrder = { open: 1, 'in-progress': 2, closed: 3 }
+        const statusOrder: Record<TicketStatus, number> = { open: 1, 'in-progress': 2, closed: 3 }
         aValue = statusOrder[a.status]
         bValue = statusOrder[b.status]
+      } else {
+        aValue = String(a[sortBy] ?? '').toLowerCase()
+        bValue = String(b[sortBy] ?? '').toLowerCase()
       }
 
       if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1
@@ -91,6 +103,13 @@ export default function Home() {
     setSearchTerm('')
     setStatusFilter('')
     setPriorityFilter('')
+  }
+
+  const formatDate = (value: Date | string) =>
+    new Intl.DateTimeFormat('sv-SE', { timeZone: 'UTC' }).format(new Date(value))
+
+  if (!hydrated) {
+    return <main className="page-container py-8 text-gray-500">Loading tickets...</main>
   }
 
   return (
@@ -234,10 +253,10 @@ export default function Home() {
                         {ticket.assignee || 'Unassigned'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {new Date(ticket.createdAt).toLocaleDateString()}
+                        {formatDate(ticket.createdAt)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                        {new Date(ticket.updatedAt).toLocaleDateString()}
+                        {formatDate(ticket.updatedAt)}
                       </td>
                     </tr>
                   ))

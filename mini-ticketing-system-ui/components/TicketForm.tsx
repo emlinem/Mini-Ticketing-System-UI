@@ -3,7 +3,6 @@
 import { useMemo, useState } from 'react'
 import { TicketAttachment, TicketPriority, TicketStatus } from "@/types/ticket"
 import { getStatusSelectColor, getPrioritySelectColor } from '@/utils/colorMappings'
-import { formatStatus, formatPriority } from '@/utils/formatters'
 import { fileToDataUrl } from '@/utils/fileHandling'
 
 type Props = {

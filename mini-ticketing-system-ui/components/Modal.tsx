@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 type Props = {
   children: React.ReactNode
@@ -36,12 +36,12 @@ export default function Modal({ children, onClose }: Props) {
   }, [])
 
   // Handle modal close with animation
-  const requestClose = () => {
+  const requestClose = useCallback(() => {
     if (isClosing) return
     setIsClosing(true)
     setVisible(false)
     setTimeout(() => onClose(), 220)
-  }
+  }, [isClosing, onClose])
 
   // Handle Escape key to close modal
   useEffect(() => {
@@ -50,7 +50,7 @@ export default function Modal({ children, onClose }: Props) {
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isClosing])
+  }, [requestClose])
 
   return (
     <div

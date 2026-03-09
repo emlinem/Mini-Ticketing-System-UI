@@ -2,62 +2,84 @@
 
 import { useRouter } from 'next/navigation'
 import { useTickets } from '@/hooks/useTickets'
-import { TicketAttachment, TicketStatus } from '@/types/ticket'
+import { TicketStatus, TicketAttachment } from '@/types/ticket'
 import { use, useRef, useState, useMemo } from 'react'
 import { getStatusColor, getStatusSelectColor, getPriorityColor, getPrioritySelectColor } from '@/utils/colorMappings'
 import { formatStatus, formatPriority } from '@/utils/formatters'
+import { useHydrated } from '@/hooks/useHydrated'
 import { fileToDataUrl } from '@/utils/fileHandling'
 
 export default function TicketDetail({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter()
-  const { tickets, updateStatus, deleteTicket, addComment, deleteComment, addAttachments, removeAttachment } = useTickets()
+  const {
+    tickets,
+    updateStatus,
+    removeAttachment,
+    deleteTicket,
+    addComment,
+    deleteComment,
+    addAttachments,
+  } = useTickets()
+
   const fileInputRef = useRef<HTMLInputElement>(null)
   const { id } = use(params)
   const ticket = tickets.find((t) => t.id === id)
 
-  // UI state
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
-
-  // Comment state
   const [commentAuthor, setCommentAuthor] = useState('')
   const [commentText, setCommentText] = useState('')
 
-  // Validation
-  const isCommentValid = useMemo(() => 
-    commentAuthor.trim() !== '' && commentText.trim() !== '',
+  const isCommentValid = useMemo(
+    () => commentAuthor.trim() !== '' && commentText.trim() !== '',
     [commentAuthor, commentText]
   )
 
-  // Event handlers
+  const hydrated = useHydrated()
+
+  const formatDate = (value: Date | string) =>
+    new Intl.DateTimeFormat('sv-SE', { timeZone: 'UTC' }).format(new Date(value))
+
+  const formatDateTime = (value: Date | string) =>
+    new Intl.DateTimeFormat('sv-SE', {
+      timeZone: 'UTC',
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(new Date(value))
+
   const handleSave = () => {
-    // TODO: Implement save functionality
     setIsEditing(false)
   }
 
-  const handleDelete = () => {
-    deleteTicket(ticket!.id)
-    router.push('/')
+  const handleMarkAsResolved = () => {
+    if (!ticket) return
+    updateStatus(ticket.id, 'closed')
   }
 
-  const handleMarkAsResolved = () => {
-    updateStatus(ticket!.id, 'closed')
+  const handleDelete = () => {
+    if (!ticket) return
+    deleteTicket(ticket.id)
+    router.push('/')
   }
 
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!isCommentValid) return
-
-    addComment(ticket!.id, commentAuthor, commentText)
+    if (!ticket || !isCommentValid) return
+    addComment(ticket.id, commentAuthor.trim(), commentText.trim())
     setCommentAuthor('')
     setCommentText('')
   }
 
   const handleDeleteComment = (commentId: string) => {
-    deleteComment(ticket!.id, commentId)
+    if (!ticket) return
+    deleteComment(ticket.id, commentId)
   }
 
   const handleAddAttachments = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!ticket) return
     const files = e.target.files ? Array.from(e.target.files) : []
     if (!files.length) return
 
@@ -72,17 +94,19 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
       }))
     )
 
-    addAttachments(ticket!.id, mapped)
+    addAttachments(ticket.id, mapped)
     e.target.value = ''
   }
 
-  // Error state
+  if (!hydrated) {
+    return <main className="page-container py-8 text-gray-500">Loading ticket...</main>
+  }
+
   if (!ticket) {
     return (
       <div className="min-h-screen p-10">
         <p>Ticket not found</p>
         <p>Looking for ID: {id}</p>
-        <p>Available tickets: {tickets.map(t => t.id).join(', ')}</p>
       </div>
     )
   }
@@ -175,7 +199,7 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
                         <div>
                           <p className="font-semibold text-gray-900">{comment.author}</p>
                           <p className="text-xs text-gray-500">
-                            {new Date(comment.createdAt).toLocaleString()}
+                            {formatDateTime(comment.createdAt)}
                           </p>
                         </div>
                         <button
@@ -362,13 +386,13 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
                 {/* Created Date */}
                 <div>
                   <label className="text-sm font-medium text-gray-600">Created</label>
-                  <p className="mt-1 text-gray-900">{new Date(ticket.createdAt).toLocaleDateString()}</p>
+                  <p className="mt-1 text-gray-900">{formatDate(ticket.createdAt)}</p>
                 </div>
 
                 {/* Updated Date */}
                 <div>
                   <label className="text-sm font-medium text-gray-600">Last updated</label>
-                  <p className="mt-1 text-gray-900">{new Date(ticket.updatedAt).toLocaleDateString()}</p>
+                  <p className="mt-1 text-gray-900">{formatDate(ticket.updatedAt)}</p>
                 </div>
               </div>
             </div>

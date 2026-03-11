@@ -49,10 +49,31 @@ export default function Home() {
 
   // Filter tickets based on search and filters
   const filteredTickets = useMemo(() => {
+    const formatSearchDate = (value: Date | string) =>
+      new Intl.DateTimeFormat('sv-SE', { timeZone: 'UTC' }).format(new Date(value))
+
     return tickets.filter(ticket => {
-      const matchesSearch = 
-        ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ticket.description.toLowerCase().includes(searchTerm.toLowerCase())
+      const query = searchTerm.trim().toLowerCase()
+      const matchesSearch =
+        query === '' ||
+        [
+          ticket.title,
+          ticket.description,
+          ticket.assignee ?? '',
+          ticket.category ?? '',
+          ticket.status,
+          formatStatus(ticket.status),
+          ticket.priority,
+          formatPriority(ticket.priority),
+          formatSearchDate(ticket.createdAt),
+          formatSearchDate(ticket.updatedAt),
+          new Date(ticket.createdAt).toISOString().slice(0, 10),
+          new Date(ticket.updatedAt).toISOString().slice(0, 10),
+        ]
+          .join(' ')
+          .toLowerCase()
+          .includes(query)
+
       const matchesStatus = !statusFilter || ticket.status === statusFilter
       const matchesPriority = !priorityFilter || ticket.priority === priorityFilter
       
@@ -185,14 +206,13 @@ export default function Home() {
             </select>
 
             {/* Clear filters button */}
-            {(searchTerm || statusFilter || priorityFilter) && (
-              <button
-                onClick={clearFilters}
-                className="h-10 px-4 text-gray-600 hover:text-gray-900 font-medium transition-colors"
-              >
-                Clear filters
-              </button>
-            )}
+            <button
+              onClick={clearFilters}
+              disabled={!searchTerm && !statusFilter && !priorityFilter}
+              className="h-10 px-4 font-medium transition-colors disabled:text-gray-400 disabled:cursor-not-allowed text-gray-600 hover:text-gray-900"
+            >
+              Clear filters
+            </button>
           </div>
         </div>
 

@@ -13,8 +13,8 @@ const INITIAL_TICKETS: Ticket[] = [
     priority: 'high',
     category: 'Bug',
     assignee: 'John Doe',
-    createdAt: new Date('2024-03-01'),
-    updatedAt: new Date('2024-03-05'),
+    createdAt: new Date('2026-02-26'),
+    updatedAt: new Date('2026-03-02'),
   },
   {
     id: '2-initial',
@@ -24,8 +24,8 @@ const INITIAL_TICKETS: Ticket[] = [
     priority: 'medium',
     category: 'Feature Request',
     assignee: 'Jane Smith',
-    createdAt: new Date('2024-03-02'),
-    updatedAt: new Date('2024-03-04'),
+    createdAt: new Date('2026-02-27'),
+    updatedAt: new Date('2026-03-03'),
   },
   {
     id: '3-initial',
@@ -35,8 +35,8 @@ const INITIAL_TICKETS: Ticket[] = [
     priority: 'high',
     category: 'Bug',
     assignee: 'Mike Johnson',
-    createdAt: new Date('2024-03-03'),
-    updatedAt: new Date('2024-03-06'),
+    createdAt: new Date('2026-03-01'),
+    updatedAt: new Date('2026-03-05'),
   },
   {
     id: '4-initial',
@@ -46,8 +46,8 @@ const INITIAL_TICKETS: Ticket[] = [
     priority: 'low',
     category: 'Documentation',
     assignee: undefined,
-    createdAt: new Date('2024-03-04'),
-    updatedAt: new Date('2024-03-04'),
+    createdAt: new Date('2026-03-02'),
+    updatedAt: new Date('2026-03-02'),
   },
   {
     id: '5-initial',
@@ -57,8 +57,8 @@ const INITIAL_TICKETS: Ticket[] = [
     priority: 'low',
     category: 'Bug',
     assignee: 'Sarah Lee',
-    createdAt: new Date('2024-02-28'),
-    updatedAt: new Date('2024-03-01'),
+    createdAt: new Date('2026-02-25'),
+    updatedAt: new Date('2026-03-01'),
   },
 ]
 

@@ -1,5 +1,12 @@
-export type TicketStatus = "open" | "in-progress" | "closed";
+//export type TicketStatus = "open" | "in-progress" | "approved" | "closed";
 export type TicketPriority = "low" | "medium" | "high";
+
+export enum TicketStatus {
+  open = 'open',
+  inProgress = 'in-progress',
+  approved = 'approved',
+  closed = 'closed',
+}
 
 export interface Comment {
   id: string;

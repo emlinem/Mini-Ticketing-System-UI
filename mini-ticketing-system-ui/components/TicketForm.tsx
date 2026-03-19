@@ -149,9 +149,7 @@ export default function TicketForm({ onCreate }: Props) {
             required
             aria-required="true"
           >
-            <option value="open">Open</option>
-            <option value="in-progress">In Progress</option>
-            <option value="closed">Closed</option>
+              {Object.values(TicketStatus).map((value) => <option key={value} value={value}></option>)}
           </select>
         </div>
       </div>

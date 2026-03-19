@@ -3,6 +3,7 @@ import { TicketStatus, TicketPriority } from '@/types/ticket'
 export const formatStatus = (status: TicketStatus) => ({
   'open': 'Open',
   'in-progress': 'In Progress',
+  'approved': 'Approved',
   'closed': 'Closed',
 }[status])
 

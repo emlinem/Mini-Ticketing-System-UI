@@ -3,12 +3,14 @@ import { TicketStatus, TicketPriority } from '@/types/ticket'
 export const getStatusColor = (status: TicketStatus) => ({
   'open': 'bg-blue-100 text-blue-700',
   'in-progress': 'bg-yellow-100 text-yellow-700',
+  'approved': 'bg-yellow-100 text-yellow-700',
   'closed': 'bg-green-100 text-green-700',
 }[status])
 
 export const getStatusSelectColor = (status: TicketStatus) => ({
   'open': 'bg-blue-100 text-blue-800',
   'in-progress': 'bg-yellow-100 text-yellow-800',
+  'approved': 'bg-yellow-100 text-yellow-800',
   'closed': 'bg-green-100 text-green-800',
 }[status])
 

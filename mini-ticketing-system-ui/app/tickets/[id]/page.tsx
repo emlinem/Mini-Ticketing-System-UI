@@ -320,6 +320,7 @@ export default function TicketDetail({ params }: { params: Promise<{ id: string 
                       >
                         <option value="open">Open</option>
                         <option value="in-progress">In Progress</option>
+                        <option value="approved">Approved</option>
                         <option value="closed">Closed</option>
                       </select>
                     ) : (
